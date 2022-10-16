@@ -1937,8 +1937,6 @@ export default {
     search(searchValue, included, excluded, transform) {
       if (!(this.tableData && this.tableData.rows)) return;
 
-      console.log("included: ", included);
-
       searchValue = String(searchValue);
       let isIncluded = !!(included && included.length >= 1);
       let isExcluded = !!(excluded && excluded.length >= 1);
@@ -1964,8 +1962,8 @@ export default {
             const cellData = transformItem
               ? transformItem.method(cell.data, index, { ...row })
               : cell.data;
-            console.log("includes ", this.includeSumInSearch);
             if (String(cellData).includes("Σ") && this.includeSumInSearch) {
+              row.isSumRow = true;
               return String(cellData);
             }
             return String(cellData)
@@ -1976,8 +1974,41 @@ export default {
         }
       });
 
+      let sum = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+
+      this.tableData.rows.forEach((row) => {
+        if (row.show && !row.isSumRow) {
+          sum[15] += this.hourStringToSeconds(row.cells[15].data);
+          sum[16] += this.stringToNumber(row.cells[16].data);
+        }
+        if (row.isSumRow && row.show) {
+          row.cells[15].data = this.secondsToHourString(sum[15]);
+          row.cells[16].data = sum[16].toFixed(2);
+        }
+      });
+
       this.updateActivatedRows();
       this.$nextTick(this.updatePagination);
+    },
+    hourStringToSeconds(hms) {
+      if (String(hms).includes(":")) {
+        var a = hms.split(":"); // split it at the colons
+
+        // minutes are worth 60 seconds. Hours are worth 60 minutes.
+        var seconds = +a[0] * 60 * 60 + +a[1] * 60 + +a[2];
+
+        return Number(seconds);
+      } else return 0;
+    },
+    secondsToHourString(seconds) {
+      return new Date(seconds * 1000).toISOString().substr(11, 8);
+    },
+    stringToNumber(str) {
+      if (!isNaN(str)) {
+        return Number(str);
+      } else {
+        return 0;
+      }
     },
     /**
      * @function 取消搜索过滤
