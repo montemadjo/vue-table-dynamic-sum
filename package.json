@@ -69,10 +69,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TheoXiong/vue-table-dynamic.git"
+    "url": "git+https://github.com/montemadjo/vue-table-dynamic-sum.git"
   },
   "bugs": {
-    "url": "https://github.com/TheoXiong/vue-table-dynamic/issues"
+    "url": "https://github.com/montemadjo/vue-table-dynamic-sum/issues"
   },
-  "homepage": "https://github.com/TheoXiong/vue-table-dynamic#readme"
+  "homepage": "https://github.com/montemadjo/vue-table-dynamic-sum#readme"
 }
