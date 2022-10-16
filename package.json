@@ -1,5 +1,5 @@
 {
-  "name": "vue-table-dynamic",
+  "name": "vue-table-dynamic-sum",
   "version": "0.4.10",
   "description": "A vue component of dynamic table",
   "main": "dist/index.min.js",
