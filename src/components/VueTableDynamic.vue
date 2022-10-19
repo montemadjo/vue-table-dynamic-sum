@@ -750,11 +750,17 @@ export default {
     enableSearch() {
       return !!(this.params && this.params.enableSearch);
     },
-    includeSumInSearch() {
-      return !!(this.params && this.params.includeSumInSearch);
+    sumIncludeInSearch() {
+      return !!(this.params && this.params.sumIncludeInSearch);
+    },
+    sumSecretPhrase() {
+      return this.params && this.params.sumSecretPhrase;
+    },
+    sumColumns() {
+      return this.params && this.params.sumColumns;
     },
     placeholder() {
-      return this.includeSumInSearch ? "Search (incl. Σ)" : "Search";
+      return this.sumIncludeInSearch ? "Search (incl. Σ)" : "Search";
     },
     enableTools() {
       return this.enableSearch;
@@ -1962,9 +1968,14 @@ export default {
             const cellData = transformItem
               ? transformItem.method(cell.data, index, { ...row })
               : cell.data;
-            if (String(cellData).includes("Σ") && this.includeSumInSearch) {
-              row.isSumRow = true;
-              return String(cellData);
+            if (this.sumIncludeInSearch) {
+              if (
+                String(cellData).includes(this.sumSecretPhrase) &&
+                this.sumIncludeInSearch
+              ) {
+                row.isSumRow = true;
+                return String(cellData);
+              }
             }
             return String(cellData)
               .toLocaleLowerCase()
@@ -1974,18 +1985,39 @@ export default {
         }
       });
 
-      let sum = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      // sum calculation
+      if (this.sumIncludeInSearch) {
+        // let sum = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        let sum = new Array(this.tableData.rows.length).fill(0);
 
-      this.tableData.rows.forEach((row) => {
-        if (row.show && !row.isSumRow) {
-          sum[15] += this.hourStringToSeconds(row.cells[15].data);
-          sum[16] += this.stringToNumber(row.cells[16].data);
-        }
-        if (row.isSumRow && row.show) {
-          row.cells[15].data = this.secondsToHourString(sum[15]);
-          row.cells[16].data = sum[16].toFixed(2);
-        }
-      });
+        this.tableData.rows.forEach((row) => {
+          if (row.show && !row.isSumRow) {
+            for (const sumColumn of this.sumColumns) {
+              if (sumColumn.type == "time") {
+                sum[sumColumn.column] += this.hourStringToSeconds(
+                  row.cells[sumColumn.column].data
+                );
+              } else if (sumColumn.type == "decimal") {
+                sum[sumColumn.column] += this.stringToNumber(
+                  row.cells[sumColumn.column].data
+                );
+              }
+            }
+          }
+          if (row.isSumRow && row.show) {
+            for (const sumColumn of this.sumColumns) {
+              if (sumColumn.type == "time") {
+                row.cells[sumColumn.column].data = this.secondsToHourString(
+                  sum[sumColumn.column]
+                );
+              } else if (sumColumn.type == "decimal") {
+                row.cells[sumColumn.column].data =
+                  sum[sumColumn.column].toFixed(2);
+              }
+            }
+          }
+        });
+      }
 
       this.updateActivatedRows();
       this.$nextTick(this.updatePagination);
@@ -2001,7 +2033,47 @@ export default {
       } else return 0;
     },
     secondsToHourString(seconds) {
-      return new Date(seconds * 1000).toISOString().substr(11, 8);
+      if (seconds >= 0) {
+        //get seconds from ticks
+        var ts = seconds;
+
+        //conversion based on seconds
+        var hh = Math.floor(ts / 3600);
+        var mm = Math.floor((ts % 3600) / 60);
+        var ss = (ts % 3600) % 60;
+
+        //prepend '0' when needed
+        hh = hh < 10 ? "0" + hh : hh;
+        mm = mm < 10 ? "0" + mm : mm;
+        ss = ss < 10 ? "0" + ss : ss;
+
+        //use it
+        var str = hh + ":" + mm + ":" + ss;
+        // console.log(str);
+        // if (str == '01:00:00')
+        //   str = "";
+        return str;
+      } else {
+        //get seconds from ticks
+        ts = -seconds / 10000000;
+
+        //conversion based on seconds
+        hh = Math.floor(ts / 3600);
+        mm = Math.floor((ts % 3600) / 60);
+        var ss = (ts % 3600) % 60;
+
+        //prepend '0' when needed
+        hh = hh < 10 ? "0" + hh : hh;
+        mm = mm < 10 ? "0" + mm : mm;
+        ss = ss < 10 ? "0" + ss : ss;
+
+        //use it
+        str = hh + ":" + mm + ":" + ss;
+        // console.log(str);
+        // if (str == '01:00:00')
+        //   str = "";
+        return "-" + str;
+      }
     },
     stringToNumber(str) {
       if (!isNaN(str)) {
