@@ -2027,7 +2027,11 @@ export default {
         var a = hms.split(":"); // split it at the colons
 
         // minutes are worth 60 seconds. Hours are worth 60 minutes.
-        var seconds = +a[0] * 60 * 60 + +a[1] * 60 + +a[2];
+        var seconds = +a[0] * 60 * 60 + +a[1] * 60 + +(a[2] ? a[2] : 0);
+
+        console.log(hms);
+        console.log(seconds);
+        console.log(Number(seconds));
 
         return Number(seconds);
       } else return 0;
